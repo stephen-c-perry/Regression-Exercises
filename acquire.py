@@ -2,20 +2,20 @@ import os
 import pandas as pd
 import env
 
-def pull_telco_data():
+def sql_zillow_data():
     sql_query = """
-                select * from customers
-                join contract_types using (contract_type_id)
-                join internet_service_types using (internet_service_type_id)
-                join payment_types using (payment_type_id)
+                Select bedroomcnt, bathroomcnt, calculatedfinishedsquarefeet, taxvaluedollarcnt, yearbuilt, taxamount, fips, propertylandusetypeid
+                from properties_2017
+                join propertylandusetype USING(propertylandusetypeid)
+                where propertylandusetypeid = 261;
                 """
-    df = pd.read_sql(sql_query, env.get_connection('telco_churn'))
+    df = pd.read_sql(sql_query, env.get_connection('zillow'))
     return df
 
-def get_telco_data():
-    if os.path.isfile('telco.csv'):
-        df = pd.read_csv('telco.csv', index_col=0)
+def get_zillow_data():
+    if os.path.isfile('zillow.csv'):
+        df = pd.read_csv('zillow.csv', index_col=0)
     else:
-        df = pull_telco_data()
-        df.to_csv('telco.csv')
+        df = sql_zillow_data()
+        df.to_csv('zillow.csv')
     return df
