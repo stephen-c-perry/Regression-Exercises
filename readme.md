@@ -1,0 +1,1 @@
+This repository contains exercises and projects for the Regression portion of the course
