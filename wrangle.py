@@ -13,7 +13,7 @@ def get_zillow():
         df = pd.read_csv('zillow.csv', index_col=0)
 
     else:
-        df = get_zillow_data()
+        df = acquire.get_zillow_data()
         df.to_csv('zillow.csv')
 
     return df
@@ -29,7 +29,7 @@ def prep_zillow(df):
                           'calculatedfinishedsquarefeet':'area',
                           'taxvaluedollarcnt':'tax_value', 
                           'yearbuilt':'year_built'})
-
+    
     df = df.dropna()
     df.drop_duplicates(inplace=True)
     
