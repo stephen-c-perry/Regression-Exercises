@@ -29,7 +29,12 @@ def prep_zillow(df):
                           'calculatedfinishedsquarefeet':'area',
                           'taxvaluedollarcnt':'tax_value', 
                           'yearbuilt':'year_built'})
-    
+
+    df = df[df.bathrooms <= 8]
+    df = df[df.bedrooms <= 8]
+    df = df[df.tax_value < 2_000_000]
+    df = df[df.area < 10000]
+
     df = df.dropna()
     df.drop_duplicates(inplace=True)
     
