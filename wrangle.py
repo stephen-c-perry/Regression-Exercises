@@ -44,6 +44,7 @@ def prep_zillow(df):
     return train, validate, test
 
 
+#wrangle_zillow combines the acquire and prep functions into one function
 def wrangle_zillow():
 
     train, validate, test = prep_zillow(get_zillow())
