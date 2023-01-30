@@ -22,33 +22,32 @@ def get_zillow():
 
 
 
-
-
 def prep_zillow(df):
-    #rename columns
+
     df = df.rename(columns={'bedroomcnt':'bedrooms', 
                           'bathroomcnt':'bathrooms',
                           'yearbuilt':'year_built',
+                          'regionidzip': 'zip_code',
                           'calculatedfinishedsquarefeet':'total_sqft',
                           'fips': 'county',
                           'taxvaluedollarcnt': 'tax_value'
                           })
-    #set upper and lower limits for bathrooms and bedrooms
+
     df = df[df.bathrooms <= 8]
     df = df[df.bathrooms >= 1]
     df = df[df.bedrooms <= 8]
     df = df[df.bedrooms >= 2]
-    
-     #convert data types 
-    
+    df = df[df.zip_code < 399675]
+    df.zip_code = df.zip_code.convert_dtypes(int)
     df.total_sqft = df.total_sqft.convert_dtypes(int)
     df.bedrooms = df.bedrooms.convert_dtypes(int)
     df.year_built = df.year_built.convert_dtypes(int)
-
-     #replace 4 digit fips code with name of county
     df.county = df.county.replace(6059.0,'Orange').replace(6037.0,'Los_Angeles').replace(6111.0,'Ventura')
     
 
+    #df = df[df.sqft < 10000]
+
+    #df = df.dropna()
     df.drop_duplicates(inplace=True)
     
     train_validate, test = train_test_split(df, test_size=.2, random_state=123)
@@ -63,3 +62,5 @@ def wrangle_zillow():
     train, validate, test = prep_zillow(get_zillow())
     
     return train, validate, test
+
+

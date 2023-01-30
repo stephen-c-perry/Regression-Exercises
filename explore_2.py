@@ -1,11 +1,14 @@
 # this contains functions for plotting various charts with seaborn and matplotlib
-# and perform stats tests for quick analysis
+#for quick analysis
 
 import seaborn as sns
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import wrangle as w
+
+import wrangle_2 as w
+import prepare_regression_2 as pr
+
 from scipy.stats import pearsonr
 from scipy.stats import spearmanr
 from scipy import stats
@@ -15,19 +18,12 @@ from scipy.stats import linregress
 from sklearn.metrics import explained_variance_score
 from sklearn.feature_selection import SelectKBest, f_regression
 from sklearn.linear_model import TweedieRegressor
-import prepare_regression as pr
 
 
 
-#Plot Categorical and Continuous Variables
-def plot_categorical_and_continuous_vars(df, categorical, continuous):
-    for col in categorical:
-        for col_2 in continuous:
-            fig, (ax1, ax2, ax3) = plt.subplots(1,3, figsize=(16,6))
-            fig.suptitle(f'{col} vs. {col_2}')
-            sns.boxplot(data=df, x=col, y=col_2, ax=ax1)
-            sns.barplot(data=df, x=col, y=col_2, ax=ax3)
-            plt.show()
+
+
+
 
 #Bar Chart
 def bar_chart(df, x_col, y_col, title):
@@ -229,12 +225,7 @@ Quickly calculate r value, p value, and standard error
 def linear_regression(x, y):
     slope, intercept, r_value, p_value, std_err = linregress(x, y)
     return slope, intercept, r_value, p_value, std_err
-'''
-x = [1, 2, 3, 4, 5]
-y = [2, 4, 6, 8, 10]
-slope, intercept = linear_regression(x, y)
-print("Slope:", slope)
-print("Intercept:", intercept)'''
+
 
 
 
@@ -245,25 +236,6 @@ def explained_variance(y_true, y_pred):
     return evs
 
 
-
-'''
-df['yhat_baseline'] = df['y'].mean()
-df.head(3)
-'''
-
-
-
-'''
-Select K Best
-# parameters: f_regression stats test, give me 8 features
-f_selector = SelectKBest(f_regression, k=8)
-# find the top 8 X's correlated with y
-f_selector.fit(X_train_scaled, y_train)
-# boolean mask of whether the column was selected or not. 
-feature_mask = f_selector.get_support()
-# get list of top K features. 
-f_feature = X_train_scaled.iloc[:,feature_mask].columns.tolist()
-'''
 
 train, validate, test = w.wrangle_zillow()
 
@@ -309,6 +281,17 @@ def bathrooms_stripplot():
     return bathrooms_stripplot
 
 
+def model_prep(df1, df2, df3):
+    df1, df2, df3 = county_dummies_all(df1, df2, df3)
+    df1 = df1.drop(columns= ['parcel_id', 'property_id', 'zip_code'])
+    df2 = df2.drop(columns= ['parcel_id', 'property_id', 'zip_code'])
+    df3 = df3.drop(columns= ['parcel_id', 'property_id', 'zip_code'])
+    return df1, df2, df3
+
+def X_train_y_train_split(df):
+    X_train = df.drop(columns = 'tax_value')
+    y_train = df.drop(columns = ['bathrooms' , 'bedrooms' , 'year_built' , 'total_sqft' , 'Los_Angeles' , 'Orange' , 'Ventura'])
+    return X_train, y_train
 
 
 #different function for getting dummies that takes in 3 arguments
@@ -330,3 +313,51 @@ def county_dummies_all(train_1, validate_1, test_1):
     return train_1_encoded, validate_1_encoded, test_1_encoded
 
 
+
+
+#getting county dummies and dropping columns
+train_model, validate_model, test_model = model_prep(train, validate, test)
+
+#separating target variable
+X_train, y_train = X_train_y_train_split(train_model)
+X_validate, y_validate = X_train_y_train_split(validate_model)
+X_test, y_test = X_train_y_train_split(test_model)
+
+#scaling
+X_train, X_validate, X_test = pr.scale_dataframes(X_train, X_validate, X_test)
+
+
+
+y_train['value_pred_mean'] = 527866.30
+y_validate['value_pred_mean'] = 527866.30
+
+y_train['value_pred_median'] = 376866.00
+y_validate['value_pred_median'] = 376866.00
+
+
+
+def GLM(power, alpha):
+    # create the model object
+    glm = TweedieRegressor(power=power, alpha=alpha)
+
+    # fit the model to our training data. We must specify the column in y_train, 
+    # since we have converted it to a dataframe from a series! 
+    glm.fit(X_train, y_train.tax_value)
+
+    # predict train
+    y_train['value_pred_lm'] = glm.predict(X_train)
+
+    # evaluate: rmse
+    rmse_train = rmse(y_train.tax_value, y_train.value_pred_mean)
+
+    # predict validate
+    y_validate['value_pred_lm'] = glm.predict(X_validate)
+
+    # evaluate: rmse
+    rmse_validate = rmse(y_validate.tax_value, y_validate.value_pred_median)
+
+    return print("RMSE for GLM using TweedieRegressor\nTraining/In-Sample: ", round(rmse_train), 
+      "\nValidation/Out-of-Sample: ", round(rmse_validate))
+
+
+    

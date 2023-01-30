@@ -4,7 +4,7 @@ import env
 
 def sql_zillow_data():
     sql_query = """
-                Select bedroomcnt, bathroomcnt, calculatedfinishedsquarefeet, taxvaluedollarcnt, yearbuilt, taxamount, fips, propertylandusetypeid
+                Select bedroomcnt, bathroomcnt, calculatedfinishedsquarefeet, taxvaluedollarcnt, yearbuilt, taxamount, fips
                 from properties_2017
                 join propertylandusetype USING(propertylandusetypeid)
                 where propertylandusetypeid = 261;
